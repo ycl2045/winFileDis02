@@ -1,0 +1,17 @@
+/*
+*/
+{
+    "Global": {
+        "Owner": "hpms",
+        "Group": "administrators",
+        "Mode": "f|w|r"
+        },
+    "Special": {
+        "a.bat": "f|-|-",
+        "e": "r|-|-"
+    },
+    "Detail": {
+        "a.bat": "c:/tmp/app",
+        "e": "c:/tmp/web"
+    }
+}
