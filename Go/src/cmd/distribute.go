@@ -113,13 +113,15 @@ func main() {
 	//check user and group in window os
 	fmt.Println("Check owner")
 	if err := util.CheckUG(ownerVar); err != nil {
-		panic(err)
+		fmt.Printf("The user [%v] is not found", ownerVar)
+		os.Exit(1)
 	}
 
 	//check mode,only contain fwr-
 	fmt.Println("Check mode")
 	if !util.CheckM(modeVar) {
-		panic("AllAUTH FORMAT ERROR,ONLY f,w,r")
+		fmt.Println("AllAUTH FORMAT ERROR,ONLY f,w,r")
+		os.Exit(1)
 	}
 
 	//check source file(s)
