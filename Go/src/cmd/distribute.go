@@ -69,27 +69,28 @@ func main() {
 	// Create sub temporary directory
 	tmpName, err := ioutil.TempDir(os.TempDir(), "Dst")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	//fmt.Println(tmpName)
 	//if crush clear temporary dir
-	//defer func() {
-	//	os.RemoveAll(tmpName)
-	//}()
+	defer func() {
+		os.RemoveAll(tmpName)
+	}()
 
 	fmt.Println("Begin uncompress file")
 
 	// Uncompress pkg file to sub temporary path
 	if path.Ext(dstPkgU) == ".rar" {
 		if err := util.CheckFile(cmd); err != nil {
-			panic(err)
+			fmt.Printf("Uncompress file error: %v", err)
+			os.Exit(1)
 		}
 		if err := tar.UnRar(cmd, dstPkgU, tmpName); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	} else {
 		if err := tar.UnZip(dstPkgU, tmpName); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -102,7 +103,7 @@ func main() {
 	var r apiR
 
 	if err := json.Unmarshal([]byte(body), &r); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// Global parameter
@@ -113,15 +114,13 @@ func main() {
 	//check user and group in window os
 	fmt.Println("Check owner")
 	if err := util.CheckUG(ownerVar); err != nil {
-		fmt.Printf("The user [%v] is not found", ownerVar)
-		os.Exit(1)
+		log.Fatalf("The user [%v] is not found\n", ownerVar)
 	}
 
 	//check mode,only contain fwr-
 	fmt.Println("Check mode")
 	if !util.CheckM(modeVar) {
-		fmt.Println("AllAUTH FORMAT ERROR,ONLY f,w,r")
-		os.Exit(1)
+		log.Fatalf("AllAUTH %v FORMAT ERROR,ONLY f,w,r", modeVar)
 	}
 
 	//check source file(s)
@@ -142,8 +141,7 @@ func main() {
 	util.RemoveDuplicate(&errPath)
 
 	if len(errPath) > 0 {
-		fmt.Println("Src File(s) :" + strings.Join(errPath, ",") + " is not exist!!!")
-		os.Exit(1)
+		log.Fatal("Src File(s) :" + strings.Join(errPath, ",") + " is not exist!!!")
 	}
 
 	// dependence config file
