@@ -31,7 +31,7 @@ type Global struct {
 type Special map[string]string
 
 //Detail define source --> destination
-type Detail map[string]string
+type Detail map[string]interface{}
 
 type apiR struct {
 	Global  Global
@@ -44,7 +44,7 @@ func main() {
 	if len(os.Args) < 2 {
 		panic("Usage: distribute.exe -p xxxxx.rar[zip]")
 	}
-	dstPkg := flag.String("p", "C:/distribute004v1.0.zip", "for distribute file package")
+	dstPkg := flag.String("p", " Need the fullpath pkg name", "for distribute file package")
 	//dstPkg := os.Args[0]
 	flag.Parse()
 
@@ -162,20 +162,37 @@ func main() {
 	// manager file
 	//fmt.Println(tmpName)
 	for key, value := range r.Detail {
-		fi, _ := os.Stat(key)
-		if fi.IsDir() {
-			//fmt.Printf("Src:%v,Dst:%v\n", key, value)
-			err := copy.Copy(key, path.Join(value, key))
-			if err != nil {
-				fmt.Printf("Copy Dir Error ---- %s\n", err)
-			}
-		} else {
-			//fmt.Printf("Src:%v,Dst:%v\n", key, value)
-			err := copy.Copy(key, path.Join(value, key))
+
+		switch vv := value.(type) {
+		case string:
+			err := copy.Copy(key, path.Join(vv, key))
 			if err != nil {
 				fmt.Printf("Copy File Error ---- %s\n", err)
 			}
+		case []interface{}:
+			for _, v := range vv {
+				err := copy.Copy(key, path.Join(v.(string), key))
+				if err != nil {
+					fmt.Printf("Copy File Error ---- %s\n", err)
+				}
+			}
+		default:
+			fmt.Println("Detail format is error:", vv)
 		}
+
+		//fi, _ := os.Stat(key)
+		//if fi.IsDir() {
+		//fmt.Printf("Src:%v,Dst:%v\n", key, value)
+		//	err := copy.Copy(key, path.Join(value, key))
+		//	if err != nil {
+		//		fmt.Printf("Copy Dir Error ---- %s\n", err)
+		//	}
+		//} else {
+		//fmt.Printf("Src:%v,Dst:%v\n", key, value)
+		//	err := copy.Copy(key, path.Join(value, key))
+		//	if err != nil {
+		//		fmt.Printf("Copy File Error ---- %s\n", err)
+		//	}
 
 	}
 
