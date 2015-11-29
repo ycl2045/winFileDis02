@@ -13,7 +13,7 @@ import (
 //ReadTxt ...
 func ReadTxt(logPath string) ([]byte, error) {
 	var r string
-	var flag bool = false
+	flag := false
 	file, err := os.OpenFile(logPath, os.O_RDONLY, 0666)
 	if err != nil {
 		panic(err)
@@ -68,7 +68,6 @@ func ReadFile(filename string) ([]byte, error) {
 func CheckUG(userVar string) error {
 	// Check all parameter ,owner,group,source is exist
 	if _, err := user.Lookup(userVar); err != nil {
-		fmt.Println("User:", userVar)
 		return err
 	}
 
@@ -113,7 +112,7 @@ func IsDirectoryExisted(dir string) bool {
 	return fi.Mode().IsDir()
 }
 
-// remove array Duplicate item
+// RemoveDuplicate array Duplicate item
 func RemoveDuplicate(slis *[]string) {
 	found := make(map[string]bool)
 	j := 0

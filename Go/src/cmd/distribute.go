@@ -31,7 +31,7 @@ type Global struct {
 type Special map[string]string
 
 //Detail define source --> destination
-type Detail map[string]string
+type Detail map[string]interface{}
 
 type apiR struct {
 	Global  Global
@@ -44,7 +44,7 @@ func main() {
 	if len(os.Args) < 2 {
 		panic("Usage: distribute.exe -p xxxxx.rar[zip]")
 	}
-	dstPkg := flag.String("p", "C:/distribute004v1.0.zip", "for distribute file package")
+	dstPkg := flag.String("p", " Need the fullpath pkg name", "for distribute file package")
 	//dstPkg := os.Args[0]
 	flag.Parse()
 
@@ -69,27 +69,28 @@ func main() {
 	// Create sub temporary directory
 	tmpName, err := ioutil.TempDir(os.TempDir(), "Dst")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	//fmt.Println(tmpName)
 	//if crush clear temporary dir
-	//defer func() {
-	//	os.RemoveAll(tmpName)
-	//}()
+	defer func() {
+		os.RemoveAll(tmpName)
+	}()
 
 	fmt.Println("Begin uncompress file")
 
 	// Uncompress pkg file to sub temporary path
 	if path.Ext(dstPkgU) == ".rar" {
 		if err := util.CheckFile(cmd); err != nil {
-			panic(err)
+			fmt.Printf("Uncompress file error: %v", err)
+			os.Exit(1)
 		}
 		if err := tar.UnRar(cmd, dstPkgU, tmpName); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	} else {
 		if err := tar.UnZip(dstPkgU, tmpName); err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 	}
 
@@ -102,7 +103,7 @@ func main() {
 	var r apiR
 
 	if err := json.Unmarshal([]byte(body), &r); err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 
 	// Global parameter
@@ -113,13 +114,13 @@ func main() {
 	//check user and group in window os
 	fmt.Println("Check owner")
 	if err := util.CheckUG(ownerVar); err != nil {
-		panic(err)
+		log.Fatalf("The user [%v] is not found\n", ownerVar)
 	}
 
 	//check mode,only contain fwr-
 	fmt.Println("Check mode")
 	if !util.CheckM(modeVar) {
-		panic("AllAUTH FORMAT ERROR,ONLY f,w,r")
+		log.Fatalf("AllAUTH %v FORMAT ERROR,ONLY f,w,r", modeVar)
 	}
 
 	//check source file(s)
@@ -140,8 +141,7 @@ func main() {
 	util.RemoveDuplicate(&errPath)
 
 	if len(errPath) > 0 {
-		fmt.Println("Src File(s) :" + strings.Join(errPath, ",") + " is not exist!!!")
-		os.Exit(1)
+		log.Fatal("Src File(s) :" + strings.Join(errPath, ",") + " is not exist!!!")
 	}
 
 	// dependence config file
@@ -162,20 +162,37 @@ func main() {
 	// manager file
 	//fmt.Println(tmpName)
 	for key, value := range r.Detail {
-		fi, _ := os.Stat(key)
-		if fi.IsDir() {
-			//fmt.Printf("Src:%v,Dst:%v\n", key, value)
-			err := copy.Copy(key, path.Join(value, key))
-			if err != nil {
-				fmt.Printf("Copy Dir Error ---- %s\n", err)
-			}
-		} else {
-			//fmt.Printf("Src:%v,Dst:%v\n", key, value)
-			err := copy.Copy(key, path.Join(value, key))
+
+		switch vv := value.(type) {
+		case string:
+			err := copy.Copy(key, path.Join(vv, key))
 			if err != nil {
 				fmt.Printf("Copy File Error ---- %s\n", err)
 			}
+		case []interface{}:
+			for _, v := range vv {
+				err := copy.Copy(key, path.Join(v.(string), key))
+				if err != nil {
+					fmt.Printf("Copy File Error ---- %s\n", err)
+				}
+			}
+		default:
+			fmt.Println("Detail format is error:", vv)
 		}
+
+		//fi, _ := os.Stat(key)
+		//if fi.IsDir() {
+		//fmt.Printf("Src:%v,Dst:%v\n", key, value)
+		//	err := copy.Copy(key, path.Join(value, key))
+		//	if err != nil {
+		//		fmt.Printf("Copy Dir Error ---- %s\n", err)
+		//	}
+		//} else {
+		//fmt.Printf("Src:%v,Dst:%v\n", key, value)
+		//	err := copy.Copy(key, path.Join(value, key))
+		//	if err != nil {
+		//		fmt.Printf("Copy File Error ---- %s\n", err)
+		//	}
 
 	}
 
